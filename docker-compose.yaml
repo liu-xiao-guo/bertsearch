@@ -1,26 +1,44 @@
-version: '3.7'
+version: '3.9'
 services:
   web:
     build: ./web
     ports:
-      - "5000:5000"
+      - "5100:5100"
     environment:
       - INDEX_NAME
     depends_on:
       - elasticsearch
       - bertserving
-
+    networks:
+      - elastic   
+ 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
-    ports:
-      - "9200:9200"
-    volumes:
-      - es-data:/usr/share/elasticsearch/data
-    tty: true
+    container_name: elasticsearch
+    image: elasticsearch:8.6.1
     environment:
-      discovery.type: single-node
-
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+       - target: 9200
+         published: 9200
+    networks:
+      - elastic   
+ 
+  kibana:
+    container_name: kibana
+    image: kibana:8.6.1
+    ports:
+      - target: 5601
+        published: 5601
+    depends_on:
+      - elasticsearch
+    networks:
+      - elastic   
   bertserving:
+    container_name: bertserving
     build: ./bertserving
     ports:
       - "5555:5555"
@@ -29,6 +47,13 @@ services:
       - PATH_MODEL=${PATH_MODEL}
     volumes:
       - "${PATH_MODEL}:/model"
+    networks:
+      - elastic
 volumes:
-  es-data:
+  es_data:
     driver: local
+
+networks:
+  elastic:
+    name: elastic
+    driver: bridge   

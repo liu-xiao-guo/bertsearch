@@ -2,16 +2,19 @@
 Example script to create elasticsearch index.
 """
 import argparse
+import json
 
 from elasticsearch import Elasticsearch
 
 
 def main(args):
-    client = Elasticsearch()
-    client.indices.delete(index=args.index_name, ignore=[404])
+    client = Elasticsearch("http://localhost:9200")
+    client.options(ignore_status=404).indices.delete(index=args.index_name)
+    # client.indices.delete(index=args.index_name, ignore=[404])
     with open(args.index_file) as index_file:
-        source = index_file.read().strip()
-        client.indices.create(index=args.index_name, body=source)
+        source = index_file.read().strip()        
+        config = json.loads(source)
+        client.indices.create(index=args.index_name, settings=config['settings'], mappings=config['mappings'])
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ def load_dataset(path):
 
 
 def main(args):
-    client = Elasticsearch()
+    client = Elasticsearch("http://localhost:9200")
     docs = load_dataset(args.data)
     bulk(client, docs)
 
